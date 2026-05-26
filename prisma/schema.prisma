@@ -1,0 +1,204 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  EXPIRED
+}
+
+// ============================================================
+// AUTHENTICATION
+// ============================================================
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relasi
+  reviews   Review[]
+  bookmarks Bookmark[]
+  orders    Order[]
+
+  @@map("users")
+}
+
+// ============================================================
+// CULINARY
+// ============================================================
+
+model Category {
+  id             String          @id @default(cuid())
+  name           String          @unique
+  slug           String          @unique
+  createdAt      DateTime        @default(now())
+
+  // Relasi
+  culinaryPlaces CulinaryPlace[]
+
+  @@map("categories")
+}
+
+model CulinaryPlace {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  address     String
+  imageUrl    String?
+  rating      Float    @default(0)
+  priceMin    Int?     // harga minimum menu (untuk filter)
+  priceMax    Int?     // harga maximum menu (untuk filter)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Foreign Key
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+
+  // Relasi
+  menus       Menu[]
+  reviews     Review[]
+  bookmarks   Bookmark[]
+  orders      Order[]
+
+  @@map("culinary_places")
+}
+
+model Menu {
+  id              String        @id @default(cuid())
+  name            String
+  description     String?
+  price           Int           // dalam Rupiah
+  stock           Int           @default(0)
+  imageUrl        String?
+  isAvailable     Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Foreign Key
+  culinaryPlaceId String
+  culinaryPlace   CulinaryPlace @relation(fields: [culinaryPlaceId], references: [id])
+
+  // Relasi
+  orderItems      OrderItem[]
+
+  @@map("menus")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int      // 1-5
+  comment   String?
+  createdAt DateTime @default(now())
+
+  // Foreign Key
+  userId          String
+  user            User          @relation(fields: [userId], references: [id])
+  culinaryPlaceId String
+  culinaryPlace   CulinaryPlace @relation(fields: [culinaryPlaceId], references: [id])
+
+  @@map("reviews")
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  // Foreign Key
+  userId          String
+  user            User          @relation(fields: [userId], references: [id])
+  culinaryPlaceId String
+  culinaryPlace   CulinaryPlace @relation(fields: [culinaryPlaceId], references: [id])
+
+  @@unique([userId, culinaryPlaceId]) // satu user hanya bisa bookmark 1x per kuliner
+  @@map("bookmarks")
+}
+
+// ============================================================
+// ORDER & PAYMENT
+// ============================================================
+
+model Order {
+  id          String      @id @default(cuid())
+  totalPrice  Int         // total dalam Rupiah
+  status      OrderStatus @default(PENDING)
+  note        String?     // catatan dari user
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Foreign Key
+  userId          String
+  user            User          @relation(fields: [userId], references: [id])
+  culinaryPlaceId String
+  culinaryPlace   CulinaryPlace @relation(fields: [culinaryPlaceId], references: [id])
+
+  // Relasi
+  orderItems  OrderItem[]
+  payment     Payment?
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id       String @id @default(cuid())
+  quantity Int
+  price    Int    // harga saat order dibuat (snapshot harga)
+
+  // Foreign Key
+  orderId  String
+  order    Order  @relation(fields: [orderId], references: [id])
+  menuId   String
+  menu     Menu   @relation(fields: [menuId], references: [id])
+
+  @@map("order_items")
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  transactionId String        @unique // dari Midtrans
+  amount        Int
+  paymentMethod String?       // QRIS, bank_transfer, dll
+  paymentStatus PaymentStatus @default(PENDING)
+  snapToken     String?       // Midtrans Snap token
+  paymentUrl    String?       // URL redirect ke halaman bayar
+  paidAt        DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Foreign Key (One-to-One dengan Order)
+  orderId       String        @unique
+  order         Order         @relation(fields: [orderId], references: [id])
+
+  @@map("payments")
+}
