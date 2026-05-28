@@ -31,11 +31,13 @@ async function main() {
   const place = await prisma.culinaryPlace.create({
     data: {
       name: 'Bakso Pak Kumis',
+      slug: 'bakso-pak-kumis',
       description: 'Bakso legendaris sejak 1990 dengan kuah gurih khas Malang',
       address: 'Jl. Soekarno Hatta No. 5, Malang',
       categoryId: categories[0].id,
       priceMin: 10000,
       priceMax: 25000,
+      priceRange: 'BUDGET',
       rating: 4.5,
     },
   });

@@ -7,8 +7,7 @@ import { CategoriesModule } from './categories/categories.module';
 import { MenusModule } from './menus/menus.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { BookmarksModule } from './bookmarks/bookmarks.module';
-import { OrdersModule } from './orders/orders.module';
-import { PaymentsModule } from './payments/payments.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -20,8 +19,7 @@ import { PaymentsModule } from './payments/payments.module';
     MenusModule,
     ReviewsModule,
     BookmarksModule,
-    OrdersModule,
-    PaymentsModule,
+    UsersModule,
   ],
 })
 export class AppModule {}

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCulinaryDto } from './dto/create-culinary.dto';
 import { QueryCulinaryDto } from './dto/query-culinary.dto';
+import { UpdateCulinaryDto } from './dto/update-culinary.dto';
 
 @Injectable()
 export class CulinaryService {
@@ -55,7 +56,7 @@ export class CulinaryService {
     });
   }
 
-  async update(id: string, dto: Partial<CreateCulinaryDto>) {
+  async update(id: string, dto: UpdateCulinaryDto) {
     await this.findOne(id);
     return this.prisma.culinaryPlace.update({ where: { id }, data: dto, include: { category: true } });
   }

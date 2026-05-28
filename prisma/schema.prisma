@@ -17,19 +17,10 @@ enum Role {
   ADMIN
 }
 
-enum OrderStatus {
-  PENDING
-  CONFIRMED
-  PROCESSING
-  COMPLETED
-  CANCELLED
-}
-
-enum PaymentStatus {
-  PENDING
-  SUCCESS
-  FAILED
-  EXPIRED
+enum PriceRange {
+  BUDGET
+  MID
+  PREMIUM
 }
 
 // ============================================================
@@ -41,6 +32,7 @@ model User {
   name      String
   email     String   @unique
   password  String
+  avatar    String?
   role      Role     @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -48,7 +40,6 @@ model User {
   // Relasi
   reviews   Review[]
   bookmarks Bookmark[]
-  orders    Order[]
 
   @@map("users")
 }
@@ -70,17 +61,27 @@ model Category {
 }
 
 model CulinaryPlace {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  address     String
-  imageUrl    String?
-  rating      Float    @default(0)
-  priceMin    Int?     // harga minimum menu (untuk filter)
-  priceMax    Int?     // harga maximum menu (untuk filter)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             String      @id @default(cuid())
+  name           String
+  slug           String      @unique
+  description    String?
+  address        String
+  district       String?
+  city           String?
+  phone          String?
+  openHours      String?
+  priceRange     PriceRange?
+  priceMin       Int?     
+  priceMax       Int?     
+  ambiance       String?     
+  coverImage     String?
+  thumbnailImage String?
+  mapUrl         String?
+  rating         Float       @default(0)
+  imageUrl       String?
+  isActive       Boolean     @default(true)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
 
   // Foreign Key
   categoryId  String
@@ -90,7 +91,6 @@ model CulinaryPlace {
   menus       Menu[]
   reviews     Review[]
   bookmarks   Bookmark[]
-  orders      Order[]
 
   @@map("culinary_places")
 }
@@ -99,7 +99,7 @@ model Menu {
   id              String        @id @default(cuid())
   name            String
   description     String?
-  price           Int           // dalam Rupiah
+  price           Int           
   stock           Int           @default(0)
   imageUrl        String?
   isAvailable     Boolean       @default(true)
@@ -109,9 +109,6 @@ model Menu {
   // Foreign Key
   culinaryPlaceId String
   culinaryPlace   CulinaryPlace @relation(fields: [culinaryPlaceId], references: [id])
-
-  // Relasi
-  orderItems      OrderItem[]
 
   @@map("menus")
 }
@@ -141,64 +138,6 @@ model Bookmark {
   culinaryPlaceId String
   culinaryPlace   CulinaryPlace @relation(fields: [culinaryPlaceId], references: [id])
 
-  @@unique([userId, culinaryPlaceId]) // satu user hanya bisa bookmark 1x per kuliner
+  @@unique([userId, culinaryPlaceId])
   @@map("bookmarks")
-}
-
-// ============================================================
-// ORDER & PAYMENT
-// ============================================================
-
-model Order {
-  id          String      @id @default(cuid())
-  totalPrice  Int         // total dalam Rupiah
-  status      OrderStatus @default(PENDING)
-  note        String?     // catatan dari user
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-
-  // Foreign Key
-  userId          String
-  user            User          @relation(fields: [userId], references: [id])
-  culinaryPlaceId String
-  culinaryPlace   CulinaryPlace @relation(fields: [culinaryPlaceId], references: [id])
-
-  // Relasi
-  orderItems  OrderItem[]
-  payment     Payment?
-
-  @@map("orders")
-}
-
-model OrderItem {
-  id       String @id @default(cuid())
-  quantity Int
-  price    Int    // harga saat order dibuat (snapshot harga)
-
-  // Foreign Key
-  orderId  String
-  order    Order  @relation(fields: [orderId], references: [id])
-  menuId   String
-  menu     Menu   @relation(fields: [menuId], references: [id])
-
-  @@map("order_items")
-}
-
-model Payment {
-  id            String        @id @default(cuid())
-  transactionId String        @unique // dari Midtrans
-  amount        Int
-  paymentMethod String?       // QRIS, bank_transfer, dll
-  paymentStatus PaymentStatus @default(PENDING)
-  snapToken     String?       // Midtrans Snap token
-  paymentUrl    String?       // URL redirect ke halaman bayar
-  paidAt        DateTime?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-
-  // Foreign Key (One-to-One dengan Order)
-  orderId       String        @unique
-  order         Order         @relation(fields: [orderId], references: [id])
-
-  @@map("payments")
 }

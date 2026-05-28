@@ -19,7 +19,7 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(dto.password, 10);
     const user = await this.prisma.user.create({
       data: { name: dto.name, email: dto.email, password: hashedPassword },
-      select: { id: true, name: true, email: true, role: true, createdAt: true },
+      select: { id: true, name: true, email: true, avatar: true, role: true, createdAt: true },
     });
 
     return { message: 'Registrasi berhasil', user };
@@ -37,7 +37,7 @@ export class AuthService {
 
     return {
       access_token,
-      user: { id: user.id, name: user.name, email: user.email, role: user.role },
+      user: { id: user.id, name: user.name, email: user.email, avatar: user.avatar, role: user.role },
     };
   }
 }
