@@ -60,10 +60,9 @@ export class CreateCulinaryDto {
   @Min(0)
   priceMax?: number;
 
-  @ApiPropertyOptional({ example: '["indoor", "lively"]' })
+  @ApiPropertyOptional({ example: ['indoor', 'lively'] })
   @IsOptional()
-  @IsString()
-  ambiance?: string;
+  ambiance?: any;
 
   @ApiPropertyOptional({ example: 'https://example.com/cover.jpg' })
   @IsOptional()

@@ -8,6 +8,39 @@ import { UpdateCulinaryDto } from './dto/update-culinary.dto';
 export class CulinaryService {
   constructor(private prisma: PrismaService) {}
 
+  private mapToFrontendFormat(place: any) {
+    let ambianceArr: string[] = [];
+    try {
+      ambianceArr = place.ambiance ? JSON.parse(place.ambiance) : [];
+    } catch {
+      ambianceArr = typeof place.ambiance === 'string' ? place.ambiance.split(',').map(s => s.trim()) : [];
+    }
+
+    const reviews = place.reviews?.map((rv: any) => ({
+      id: rv.id,
+      userId: rv.userId,
+      userName: rv.user?.name || 'Unknown User',
+      userAvatar: rv.user?.avatar || '',
+      rating: rv.rating,
+      comment: rv.comment || '',
+      date: rv.createdAt.toISOString().split('T')[0], // format: YYYY-MM-DD
+    })) || [];
+
+    return {
+      ...place,
+      category: place.category?.slug || 'indonesian',
+      categories: place.category ? [place.category.slug] : ['indonesian'],
+      ambiance: ambianceArr,
+      priceRange: place.priceRange ? place.priceRange.toLowerCase() : 'mid',
+      menu: place.menus || [],
+      reviews,
+      reviewCount: reviews.length,
+      // Remove original relations that are replaced
+      menus: undefined,
+      categoryId: undefined,
+    };
+  }
+
   async findAll(query: QueryCulinaryDto) {
     const { search, categoryId, minPrice, maxPrice, page = 1, limit = 10 } = query;
     const skip = (page - 1) * limit;
@@ -23,13 +56,18 @@ export class CulinaryService {
         where,
         skip,
         take: limit,
-        include: { category: true },
+        include: { 
+          category: true,
+          menus: { where: { isAvailable: true } },
+          reviews: { include: { user: { select: { id: true, name: true, avatar: true } } } }
+        },
         orderBy: { rating: 'desc' },
       }),
       this.prisma.culinaryPlace.count({ where }),
     ]);
 
-    return { data, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
+    const formattedData = data.map(place => this.mapToFrontendFormat(place));
+    return { data: formattedData, meta: { total, page, limit, totalPages: Math.ceil(total / limit) } };
   }
 
   async findOne(id: string) {
@@ -39,26 +77,42 @@ export class CulinaryService {
         category: true,
         menus: { where: { isAvailable: true } },
         reviews: {
-          include: { user: { select: { id: true, name: true } } },
+          include: { user: { select: { id: true, name: true, avatar: true } } },
           orderBy: { createdAt: 'desc' },
-          take: 10,
         },
       },
     });
     if (!place) throw new NotFoundException('Kuliner tidak ditemukan');
-    return place;
+    return this.mapToFrontendFormat(place);
   }
 
   async create(dto: CreateCulinaryDto) {
-    return this.prisma.culinaryPlace.create({
-      data: dto,
-      include: { category: true },
+    const dataToSave = { ...dto };
+    if (Array.isArray(dataToSave.ambiance)) {
+      dataToSave.ambiance = JSON.stringify(dataToSave.ambiance);
+    }
+
+    const place = await this.prisma.culinaryPlace.create({
+      data: dataToSave,
+      include: { category: true, menus: true, reviews: { include: { user: true } } },
     });
+    return this.mapToFrontendFormat(place);
   }
 
   async update(id: string, dto: UpdateCulinaryDto) {
-    await this.findOne(id);
-    return this.prisma.culinaryPlace.update({ where: { id }, data: dto, include: { category: true } });
+    await this.findOne(id); // Check existence
+    
+    const dataToSave = { ...dto };
+    if (Array.isArray(dataToSave.ambiance)) {
+      dataToSave.ambiance = JSON.stringify(dataToSave.ambiance);
+    }
+
+    const place = await this.prisma.culinaryPlace.update({ 
+      where: { id }, 
+      data: dataToSave, 
+      include: { category: true, menus: true, reviews: { include: { user: true } } } 
+    });
+    return this.mapToFrontendFormat(place);
   }
 
   async remove(id: string) {

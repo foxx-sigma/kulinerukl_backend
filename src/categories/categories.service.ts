@@ -17,8 +17,24 @@ export class CategoriesService {
   }
 
   async create(dto: CreateCategoryDto) {
-    const exists = await this.prisma.category.findUnique({ where: { slug: dto.slug } });
-    if (exists) throw new ConflictException('Slug sudah digunakan');
+    const exists = await this.prisma.category.findFirst({
+      where: {
+        OR: [
+          { name: dto.name },
+          { slug: dto.slug },
+        ],
+      },
+    });
+
+    if (exists) {
+      if (exists.name === dto.name) {
+        throw new ConflictException('Nama kategori sudah digunakan');
+      }
+      if (exists.slug === dto.slug) {
+        throw new ConflictException('Slug sudah digunakan');
+      }
+    }
+
     return this.prisma.category.create({ data: dto });
   }
 

@@ -22,7 +22,10 @@ export class AuthService {
       select: { id: true, name: true, email: true, avatar: true, role: true, createdAt: true },
     });
 
-    return { message: 'Registrasi berhasil', user };
+    return { 
+      message: 'Registrasi berhasil', 
+      user: { ...user, role: user.role.toLowerCase() } 
+    };
   }
 
   async login(dto: LoginDto) {
@@ -37,7 +40,7 @@ export class AuthService {
 
     return {
       access_token,
-      user: { id: user.id, name: user.name, email: user.email, avatar: user.avatar, role: user.role },
+      user: { id: user.id, name: user.name, email: user.email, avatar: user.avatar, role: user.role.toLowerCase() },
     };
   }
 }
