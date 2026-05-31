@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCulinaryDto } from './dto/create-culinary.dto';
 import { QueryCulinaryDto } from './dto/query-culinary.dto';
@@ -92,11 +93,15 @@ export class CulinaryService {
       dataToSave.ambiance = JSON.stringify(dataToSave.ambiance);
     }
 
-    const place = await this.prisma.culinaryPlace.create({
-      data: dataToSave,
-      include: { category: true, menus: true, reviews: { include: { user: true } } },
-    });
-    return this.mapToFrontendFormat(place);
+    try {
+      const place = await this.prisma.culinaryPlace.create({
+        data: dataToSave,
+        include: { category: true, menus: true, reviews: { include: { user: true } } },
+      });
+      return this.mapToFrontendFormat(place);
+    } catch (err) {
+      this.handleDuplicateError(err);
+    }
   }
 
   async update(id: string, dto: UpdateCulinaryDto) {
@@ -107,17 +112,38 @@ export class CulinaryService {
       dataToSave.ambiance = JSON.stringify(dataToSave.ambiance);
     }
 
-    const place = await this.prisma.culinaryPlace.update({ 
-      where: { id }, 
-      data: dataToSave, 
-      include: { category: true, menus: true, reviews: { include: { user: true } } } 
-    });
-    return this.mapToFrontendFormat(place);
+    try {
+      const place = await this.prisma.culinaryPlace.update({ 
+        where: { id }, 
+        data: dataToSave, 
+        include: { category: true, menus: true, reviews: { include: { user: true } } } 
+      });
+      return this.mapToFrontendFormat(place);
+    } catch (err) {
+      this.handleDuplicateError(err);
+    }
   }
 
   async remove(id: string) {
     await this.findOne(id);
     await this.prisma.culinaryPlace.update({ where: { id }, data: { isActive: false } });
     return { message: 'Kuliner berhasil dihapus' };
+  }
+
+  // ─── Helper: Prisma Unique Constraint Error ───────────────────────────────
+  private handleDuplicateError(err: unknown): never {
+    if (
+      err instanceof Prisma.PrismaClientKnownRequestError &&
+      err.code === 'P2002'
+    ) {
+      const fields = (err.meta?.target as string[]) ?? [];
+      if (fields.includes('slug')) {
+        throw new ConflictException(
+          'Nama restoran ini sudah terdaftar (slug duplikat). Gunakan nama yang berbeda.'
+        );
+      }
+      throw new ConflictException('Data ini sudah terdaftar sebelumnya (duplikat).');
+    }
+    throw err;
   }
 }
