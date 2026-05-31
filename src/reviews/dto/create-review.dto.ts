@@ -3,9 +3,9 @@ import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateReviewDto {
-  @ApiProperty({ example: 'restaurant-id-here' })
+  @ApiProperty({ example: 'culinary-place-id-here' })
   @IsString()
-  restaurantId: string;
+  culinaryPlaceId: string;
 
   @ApiProperty({ example: 5, minimum: 1, maximum: 5 })
   @Type(() => Number)

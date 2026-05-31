@@ -20,23 +20,39 @@ export class CulinaryService {
     const reviews = place.reviews?.map((rv: any) => ({
       id: rv.id,
       userId: rv.userId,
+      // object `user` agar frontend bisa akses rev.user?.name
+      user: rv.user
+        ? { id: rv.user.id, name: rv.user.name }
+        : null,
       userName: rv.user?.name || 'Unknown User',
       userAvatar: rv.user?.avatar || '',
       rating: rv.rating,
       comment: rv.comment || '',
-      date: rv.createdAt.toISOString().split('T')[0], // format: YYYY-MM-DD
+      // createdAt (ISO string) agar frontend bisa: new Date(rev.createdAt)
+      createdAt: rv.createdAt instanceof Date
+        ? rv.createdAt.toISOString()
+        : rv.createdAt,
+      date: rv.createdAt instanceof Date
+        ? rv.createdAt.toISOString().split('T')[0]
+        : (rv.createdAt ? String(rv.createdAt).split('T')[0] : ''),
     })) || [];
+
+    // category dikembalikan sebagai object { id, name, slug }
+    // agar frontend bisa akses: restaurant.category?.name  dan  restaurant.category?.slug
+    const categoryObj = place.category
+      ? { id: place.category.id, name: place.category.name, slug: place.category.slug }
+      : { id: '', name: 'Lainnya', slug: 'indonesian' };
 
     return {
       ...place,
-      category: place.category?.slug || 'indonesian',
+      category: categoryObj,
       categories: place.category ? [place.category.slug] : ['indonesian'],
       ambiance: ambianceArr,
       priceRange: place.priceRange ? place.priceRange.toLowerCase() : 'mid',
       menu: place.menus || [],
       reviews,
       reviewCount: reviews.length,
-      // Remove original relations that are replaced
+      // Hapus relasi asli yang sudah digantikan
       menus: undefined,
       categoryId: undefined,
     };
