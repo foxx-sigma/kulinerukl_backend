@@ -64,7 +64,14 @@ export class CulinaryService {
 
     const where: any = { isActive: true };
     if (search) where.name = { contains: search, mode: 'insensitive' };
-    if (categoryId) where.categoryId = categoryId;
+    if (categoryId) {
+      const isCuid = categoryId.startsWith('c') && categoryId.length >= 25;
+      if (isCuid) {
+        where.categoryId = categoryId;
+      } else {
+        where.category = { slug: categoryId };
+      }
+    }
     if (minPrice !== undefined) where.priceMin = { gte: minPrice };
     if (maxPrice !== undefined) where.priceMax = { lte: maxPrice };
     if (district) where.district = district;
