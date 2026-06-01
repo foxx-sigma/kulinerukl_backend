@@ -2,6 +2,7 @@ import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } f
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CulinaryService } from './culinary.service';
 import { CreateCulinaryDto } from './dto/create-culinary.dto';
+import { UpdateCulinaryDto } from './dto/update-culinary.dto';
 import { QueryCulinaryDto } from './dto/query-culinary.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
@@ -38,7 +39,7 @@ export class CulinaryController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   @ApiBearerAuth()
-  update(@Param('id') id: string, @Body() dto: Partial<CreateCulinaryDto>) {
+  update(@Param('id') id: string, @Body() dto: UpdateCulinaryDto) {
     return this.culinaryService.update(id, dto);
   }
 
