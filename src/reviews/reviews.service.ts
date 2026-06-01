@@ -1,20 +1,29 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateReviewDto } from './dto/create-review.dto';
+import { PaginationDto, createPaginationMeta } from '../common/dto/pagination.dto';
 
 @Injectable()
 export class ReviewsService {
   constructor(private prisma: PrismaService) {}
 
-  async findByCulinary(culinaryPlaceId: string) {
-    const reviews = await this.prisma.review.findMany({
-      where: { culinaryPlaceId },
-      include: { user: { select: { id: true, name: true, avatar: true } } },
-      orderBy: { createdAt: 'desc' },
-    });
+  async findByCulinary(culinaryPlaceId: string, pagination: PaginationDto) {
+    const { page = 1, limit = 10 } = pagination;
+    const skip = (page - 1) * limit;
+
+    const [reviews, total] = await Promise.all([
+      this.prisma.review.findMany({
+        where: { culinaryPlaceId },
+        include: { user: { select: { id: true, name: true, avatar: true } } },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.review.count({ where: { culinaryPlaceId } }),
+    ]);
 
     // Normalisasi shape agar konsisten dengan yang diharapkan frontend
-    return reviews.map((rv) => ({
+    const data = reviews.map((rv) => ({
       id: rv.id,
       userId: rv.userId,
       user: rv.user ? { id: rv.user.id, name: rv.user.name } : null,
@@ -25,6 +34,8 @@ export class ReviewsService {
       createdAt: rv.createdAt.toISOString(),
       date: rv.createdAt.toISOString().split('T')[0],
     }));
+
+    return { data, meta: createPaginationMeta(total, page, limit) };
   }
 
   async create(userId: string, dto: CreateReviewDto) {

@@ -1,16 +1,29 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMenuDto } from './dto/create-menu.dto';
+import { PaginationDto, createPaginationMeta } from '../common/dto/pagination.dto';
 
 @Injectable()
 export class MenusService {
   constructor(private prisma: PrismaService) {}
 
-  async findByCulinary(culinaryPlaceId: string) {
-    return this.prisma.menu.findMany({
-      where: { culinaryPlaceId, isAvailable: true },
-      orderBy: { name: 'asc' },
-    });
+  async findByCulinary(culinaryPlaceId: string, pagination: PaginationDto) {
+    const { page = 1, limit = 10 } = pagination;
+    const skip = (page - 1) * limit;
+
+    const where = { culinaryPlaceId, isAvailable: true };
+
+    const [data, total] = await Promise.all([
+      this.prisma.menu.findMany({
+        where,
+        orderBy: { name: 'asc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.menu.count({ where }),
+    ]);
+
+    return { data, meta: createPaginationMeta(total, page, limit) };
   }
 
   async findOne(id: string) {

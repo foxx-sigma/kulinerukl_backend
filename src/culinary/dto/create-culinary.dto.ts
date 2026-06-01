@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsNumber, Min, IsEnum, IsBoolean } from 'class-validator';
+import { IsString, IsOptional, IsNumber, Min, IsEnum, IsBoolean } from 'class-validator'; // IsNumber still used by priceMin/priceMax
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PriceRange } from '@prisma/client';
@@ -84,7 +84,7 @@ export class CreateCulinaryDto {
   @IsString()
   mapUrl?: string;
 
-  @ApiPropertyOptional({ example: true })
+  @ApiPropertyOptional({ example: true })x  
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;

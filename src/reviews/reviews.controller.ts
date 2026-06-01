@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ReviewsService } from './reviews.service';
 import { CreateReviewDto } from './dto/create-review.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
 import { Roles } from '../decorators/roles.decorator';
@@ -14,9 +15,9 @@ export class ReviewsController {
   constructor(private reviewsService: ReviewsService) {}
 
   @Get('culinary/:culinaryId')
-  @ApiOperation({ summary: 'Daftar review per kuliner' })
-  findByCulinary(@Param('culinaryId') culinaryId: string) {
-    return this.reviewsService.findByCulinary(culinaryId);
+  @ApiOperation({ summary: 'Daftar review per kuliner (dengan pagination)' })
+  findByCulinary(@Param('culinaryId') culinaryId: string, @Query() pagination: PaginationDto) {
+    return this.reviewsService.findByCulinary(culinaryId, pagination);
   }
 
   @Post()

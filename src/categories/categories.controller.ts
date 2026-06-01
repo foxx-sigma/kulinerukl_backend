@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
 import { Roles } from '../decorators/roles.decorator';
@@ -13,9 +14,9 @@ export class CategoriesController {
   constructor(private categoriesService: CategoriesService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Daftar semua kategori' })
-  findAll() {
-    return this.categoriesService.findAll();
+  @ApiOperation({ summary: 'Daftar semua kategori (dengan pagination)' })
+  findAll(@Query() pagination: PaginationDto) {
+    return this.categoriesService.findAll(pagination);
   }
 
   @Get(':id')

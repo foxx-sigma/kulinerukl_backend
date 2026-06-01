@@ -1,16 +1,29 @@
 import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { PaginationDto, createPaginationMeta } from '../common/dto/pagination.dto';
 
 @Injectable()
 export class BookmarksService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(userId: string) {
-    return this.prisma.bookmark.findMany({
-      where: { userId },
-      include: { culinaryPlace: { include: { category: true } } },
-      orderBy: { createdAt: 'desc' },
-    });
+  async findAll(userId: string, pagination: PaginationDto) {
+    const { page = 1, limit = 10 } = pagination;
+    const skip = (page - 1) * limit;
+
+    const where = { userId };
+
+    const [data, total] = await Promise.all([
+      this.prisma.bookmark.findMany({
+        where,
+        include: { culinaryPlace: { include: { category: true } } },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.bookmark.count({ where }),
+    ]);
+
+    return { data, meta: createPaginationMeta(total, page, limit) };
   }
 
   async create(userId: string, culinaryPlaceId: string) {

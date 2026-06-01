@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { MenusService } from './menus.service';
 import { CreateMenuDto } from './dto/create-menu.dto';
+import { PaginationDto } from '../common/dto/pagination.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { RolesGuard } from '../guards/roles.guard';
 import { Roles } from '../decorators/roles.decorator';
@@ -13,9 +14,9 @@ export class MenusController {
   constructor(private menusService: MenusService) {}
 
   @Get('culinary/:culinaryId/menus')
-  @ApiOperation({ summary: 'Daftar menu per kuliner' })
-  findByCulinary(@Param('culinaryId') culinaryId: string) {
-    return this.menusService.findByCulinary(culinaryId);
+  @ApiOperation({ summary: 'Daftar menu per kuliner (dengan pagination)' })
+  findByCulinary(@Param('culinaryId') culinaryId: string, @Query() pagination: PaginationDto) {
+    return this.menusService.findByCulinary(culinaryId, pagination);
   }
 
   @Post('menus')

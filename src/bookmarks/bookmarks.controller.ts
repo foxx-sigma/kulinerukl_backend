@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Delete, Param, UseGuards, Body } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Param, Query, UseGuards, Body } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { IsString } from 'class-validator';
 import { BookmarksService } from './bookmarks.service';
+import { PaginationDto } from '../common/dto/pagination.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { GetUser } from '../decorators/get-user.decorator';
 
@@ -18,9 +19,9 @@ export class BookmarksController {
   constructor(private bookmarksService: BookmarksService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Daftar bookmark user' })
-  findAll(@GetUser('id') userId: string) {
-    return this.bookmarksService.findAll(userId);
+  @ApiOperation({ summary: 'Daftar bookmark user (dengan pagination)' })
+  findAll(@GetUser('id') userId: string, @Query() pagination: PaginationDto) {
+    return this.bookmarksService.findAll(userId, pagination);
   }
 
   @Post()
