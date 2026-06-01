@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { PaginationDto, createPaginationMeta } from '../common/dto/pagination.dto';
@@ -33,12 +34,26 @@ export class MenusService {
   }
 
   async create(dto: CreateMenuDto) {
-    return this.prisma.menu.create({ data: dto });
+    try {
+      return await this.prisma.menu.create({ data: dto });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+        throw new BadRequestException('ID Tempat Kuliner tidak valid atau tidak ditemukan.');
+      }
+      throw error;
+    }
   }
 
   async update(id: string, dto: Partial<CreateMenuDto>) {
     await this.findOne(id);
-    return this.prisma.menu.update({ where: { id }, data: dto });
+    try {
+      return await this.prisma.menu.update({ where: { id }, data: dto });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+        throw new BadRequestException('ID Tempat Kuliner tidak valid atau tidak ditemukan.');
+      }
+      throw error;
+    }
   }
 
   async remove(id: string) {
