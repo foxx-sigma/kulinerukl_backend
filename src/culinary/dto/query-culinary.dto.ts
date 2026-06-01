@@ -27,6 +27,23 @@ export class QueryCulinaryDto {
   @Min(0)
   maxPrice?: number;
 
+  @ApiPropertyOptional({ example: 'Klojen' })
+  @IsOptional()
+  @IsString()
+  district?: string;
+
+  @ApiPropertyOptional({ example: 'indoor' })
+  @IsOptional()
+  @IsString()
+  ambiance?: string;
+
+  @ApiPropertyOptional({ example: 4.5 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  minRating?: number;
+
   @ApiPropertyOptional({ example: 1 })
   @IsOptional()
   @Type(() => Number)
@@ -34,10 +51,10 @@ export class QueryCulinaryDto {
   @Min(1)
   page?: number = 1;
 
-  @ApiPropertyOptional({ example: 10 })
+  @ApiPropertyOptional({ example: 5 })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(1)
-  limit?: number = 10;
+  limit?: number = 5;
 }

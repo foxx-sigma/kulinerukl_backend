@@ -10,12 +10,12 @@ export class PaginationDto {
   @Min(1)
   page?: number = 1;
 
-  @ApiPropertyOptional({ example: 10, description: 'Jumlah data per halaman' })
+  @ApiPropertyOptional({ example: 5, description: 'Jumlah data per halaman' })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(1)
-  limit?: number = 10;
+  limit?: number = 5;
 }
 
 export function createPaginationMeta(total: number, page: number, limit: number) {

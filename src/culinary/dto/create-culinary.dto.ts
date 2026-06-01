@@ -84,7 +84,7 @@ export class CreateCulinaryDto {
   @IsString()
   mapUrl?: string;
 
-  @ApiPropertyOptional({ example: true })x  
+  @ApiPropertyOptional({ example: true })
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;

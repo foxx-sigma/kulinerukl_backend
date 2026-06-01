@@ -59,7 +59,7 @@ export class CulinaryService {
   }
 
   async findAll(query: QueryCulinaryDto) {
-    const { search, categoryId, minPrice, maxPrice, page = 1, limit = 10 } = query;
+    const { search, categoryId, minPrice, maxPrice, district, ambiance, minRating, page = 1, limit = 5 } = query;
     const skip = (page - 1) * limit;
 
     const where: any = { isActive: true };
@@ -67,6 +67,9 @@ export class CulinaryService {
     if (categoryId) where.categoryId = categoryId;
     if (minPrice !== undefined) where.priceMin = { gte: minPrice };
     if (maxPrice !== undefined) where.priceMax = { lte: maxPrice };
+    if (district) where.district = district;
+    if (ambiance) where.ambiance = { contains: ambiance, mode: 'insensitive' };
+    if (minRating !== undefined) where.rating = { gte: minRating };
 
     const [data, total] = await Promise.all([
       this.prisma.culinaryPlace.findMany({
