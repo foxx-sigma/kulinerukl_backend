@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { PaginationDto, createPaginationMeta } from '../common/dto/pagination.dto';
@@ -58,6 +58,17 @@ export class CategoriesService {
 
   async remove(id: string) {
     await this.findOne(id);
+
+    const hasCulinaryPlaces = await this.prisma.culinaryPlace.findFirst({
+      where: { categoryId: id },
+    });
+
+    if (hasCulinaryPlaces) {
+      throw new BadRequestException(
+        'Kategori tidak bisa dihapus karena masih digunakan oleh beberapa tempat kuliner',
+      );
+    }
+
     await this.prisma.category.delete({ where: { id } });
     return { message: 'Kategori berhasil dihapus' };
   }
