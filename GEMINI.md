@@ -459,7 +459,7 @@ model Payment {
   id            String        @id @default(cuid())
   transactionId String        @unique // dari Midtrans
   amount        Int
-  paymentMethod String?       // QRIS, bank_transfer, dll
+  paymentMethod String?       // QRIS, bank_transfer,
   paymentStatus PaymentStatus @default(PENDING)
   snapToken     String?       // Midtrans Snap token
   paymentUrl    String?       // URL redirect ke halaman bayar

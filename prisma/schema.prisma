@@ -40,6 +40,7 @@ model User {
   // Relasi
   reviews   Review[]
   bookmarks Bookmark[]
+  orders    Order[]
 
   @@map("users")
 }
@@ -140,4 +141,24 @@ model Bookmark {
 
   @@unique([userId, culinaryPlaceId])
   @@map("bookmarks")
+}
+
+// ============================================================
+// ORDERS
+// ============================================================
+
+model Order {
+  id               String      @id @default(uuid())
+  userId           String
+  user             User        @relation(fields: [userId], references: [id])
+  items            Json        
+  totalPrice       Float
+  paymentMethod    String      
+  transferProofUrl String?
+  status           String      @default("pending_payment")
+  rejectionNote    String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  @@map("orders")
 }
