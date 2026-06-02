@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
@@ -16,6 +16,16 @@ export class UsersService {
   }
 
   async updateProfile(userId: string, dto: UpdateProfileDto) {
+    // Cek apakah email baru sudah digunakan oleh user lain
+    if (dto.email) {
+      const emailConflict = await this.prisma.user.findFirst({
+        where: { email: dto.email, NOT: { id: userId } },
+      });
+      if (emailConflict) {
+        throw new ConflictException('Email sudah digunakan oleh akun lain.');
+      }
+    }
+
     const user = await this.prisma.user.update({
       where: { id: userId },
       data: dto,

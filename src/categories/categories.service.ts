@@ -53,6 +53,27 @@ export class CategoriesService {
 
   async update(id: string, dto: Partial<CreateCategoryDto>) {
     await this.findOne(id);
+
+    // Cek duplikat nama/slug dengan kategori LAIN (bukan dirinya sendiri)
+    if (dto.name || dto.slug) {
+      const orConditions: any[] = [];
+      if (dto.name) orConditions.push({ name: dto.name });
+      if (dto.slug) orConditions.push({ slug: dto.slug });
+
+      const conflict = await this.prisma.category.findFirst({
+        where: { OR: orConditions, NOT: { id } },
+      });
+
+      if (conflict) {
+        if (dto.name && conflict.name === dto.name) {
+          throw new ConflictException('Nama kategori sudah digunakan oleh kategori lain');
+        }
+        if (dto.slug && conflict.slug === dto.slug) {
+          throw new ConflictException('Slug sudah digunakan oleh kategori lain');
+        }
+      }
+    }
+
     return this.prisma.category.update({ where: { id }, data: dto });
   }
 

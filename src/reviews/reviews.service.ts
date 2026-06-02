@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { PaginationDto, createPaginationMeta } from '../common/dto/pagination.dto';
@@ -43,6 +43,16 @@ export class ReviewsService {
       where: { id: dto.culinaryPlaceId },
     });
     if (!place) throw new NotFoundException('Kuliner tidak ditemukan');
+
+    // Cek duplikat: 1 user hanya boleh 1 review per kuliner
+    const existingReview = await this.prisma.review.findFirst({
+      where: { userId, culinaryPlaceId: dto.culinaryPlaceId },
+    });
+    if (existingReview) {
+      throw new ConflictException(
+        'Kamu sudah pernah memberikan review untuk kuliner ini. Setiap user hanya bisa review 1x per kuliner.',
+      );
+    }
 
     const review = await this.prisma.review.create({
       data: { userId, culinaryPlaceId: dto.culinaryPlaceId, rating: dto.rating, comment: dto.comment },

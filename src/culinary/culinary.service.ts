@@ -132,7 +132,27 @@ export class CulinaryService {
 
   async update(id: string, dto: UpdateCulinaryDto) {
     await this.findOne(id); // Check existence
-    
+
+    // Cek duplikat slug/name dengan kuliner LAIN (bukan dirinya sendiri)
+    if (dto.slug || dto.name) {
+      const orConditions: any[] = [];
+      if (dto.slug) orConditions.push({ slug: dto.slug });
+      // name bukan @unique di DB, tapi slug-nya unique — cek slug saja sudah cukup
+
+      if (orConditions.length > 0) {
+        const conflict = await this.prisma.culinaryPlace.findFirst({
+          where: { OR: orConditions, NOT: { id } },
+        });
+        if (conflict) {
+          if (dto.slug && conflict.slug === dto.slug) {
+            throw new ConflictException(
+              'Nama restoran ini sudah terdaftar (slug duplikat). Gunakan nama yang berbeda.',
+            );
+          }
+        }
+      }
+    }
+
     const dataToSave = { ...dto };
     if (Array.isArray(dataToSave.ambiance)) {
       dataToSave.ambiance = JSON.stringify(dataToSave.ambiance);

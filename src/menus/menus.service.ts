@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMenuDto } from './dto/create-menu.dto';
@@ -34,6 +34,19 @@ export class MenusService {
   }
 
   async create(dto: CreateMenuDto) {
+    // Cek duplikat: nama menu yang sama di restoran yang sama
+    const duplicate = await this.prisma.menu.findFirst({
+      where: {
+        culinaryPlaceId: dto.culinaryPlaceId,
+        name: { equals: dto.name, mode: 'insensitive' },
+      },
+    });
+    if (duplicate) {
+      throw new ConflictException(
+        `Menu dengan nama "${dto.name}" sudah ada di restoran ini.`,
+      );
+    }
+
     try {
       return await this.prisma.menu.create({ data: dto });
     } catch (error) {
@@ -45,7 +58,25 @@ export class MenusService {
   }
 
   async update(id: string, dto: Partial<CreateMenuDto>) {
-    await this.findOne(id);
+    const existing = await this.findOne(id);
+
+    // Cek duplikat nama menu di restoran yang sama (kecuali menu itu sendiri)
+    if (dto.name) {
+      const culinaryId = dto.culinaryPlaceId ?? existing.culinaryPlaceId;
+      const duplicate = await this.prisma.menu.findFirst({
+        where: {
+          culinaryPlaceId: culinaryId,
+          name: { equals: dto.name, mode: 'insensitive' },
+          NOT: { id },
+        },
+      });
+      if (duplicate) {
+        throw new ConflictException(
+          `Menu dengan nama "${dto.name}" sudah ada di restoran ini.`,
+        );
+      }
+    }
+
     try {
       return await this.prisma.menu.update({ where: { id }, data: dto });
     } catch (error) {

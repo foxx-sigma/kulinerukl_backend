@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsNumber, Min, IsEnum, IsBoolean } from 'class-validator'; // IsNumber still used by priceMin/priceMax
+import { IsString, IsOptional, IsNumber, Min, IsEnum, IsBoolean, IsNotEmpty, MinLength, MaxLength } from 'class-validator'; // IsNumber still used by priceMin/priceMax
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PriceRange } from '@prisma/client';
@@ -6,10 +6,14 @@ import { PriceRange } from '@prisma/client';
 export class CreateCulinaryDto {
   @ApiProperty({ example: 'Bakso Pak Kumis' })
   @IsString()
+  @IsNotEmpty({ message: 'Nama kuliner tidak boleh kosong' })
+  @MinLength(2, { message: 'Nama kuliner minimal 2 karakter' })
+  @MaxLength(150, { message: 'Nama kuliner maksimal 150 karakter' })
   name: string;
 
   @ApiProperty({ example: 'bakso-pak-kumis' })
   @IsString()
+  @IsNotEmpty({ message: 'Slug tidak boleh kosong' })
   slug: string;
 
   @ApiPropertyOptional({ example: 'Bakso legendaris sejak 1990' })
@@ -19,6 +23,7 @@ export class CreateCulinaryDto {
 
   @ApiProperty({ example: 'Jl. Soekarno Hatta No. 5' })
   @IsString()
+  @IsNotEmpty({ message: 'Alamat tidak boleh kosong' })
   address: string;
 
   @ApiPropertyOptional({ example: 'Lowokwaru' })
@@ -91,5 +96,6 @@ export class CreateCulinaryDto {
 
   @ApiProperty({ example: 'category-id-here' })
   @IsString()
+  @IsNotEmpty({ message: 'CategoryId tidak boleh kosong' })
   categoryId: string;
 }

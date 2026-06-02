@@ -12,6 +12,11 @@ export class OrdersService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(userId: string, dto: CreateOrderDto) {
+    // Validasi items tidak boleh kosong
+    if (!dto.items || dto.items.length === 0) {
+      throw new BadRequestException('Pesanan harus memiliki minimal 1 item.');
+    }
+
     const status = dto.paymentMethod === 'cash' ? 'pending_payment' : 'pending_validation';
     
     // Parse items to JSON for Prisma Json field
