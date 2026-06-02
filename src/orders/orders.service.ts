@@ -63,7 +63,7 @@ export class OrdersService {
 
     if (role === 'ADMIN') {
       // Admin can update anything
-      return this.prisma.order.update({
+      const updatedOrder = await this.prisma.order.update({
         where: { id },
         data: {
           status: dto.status ?? order.status,
@@ -71,6 +71,40 @@ export class OrdersService {
           transferProofUrl: dto.transferProofUrl ?? order.transferProofUrl,
         },
       });
+
+      // ── Kurangi stok menu saat order diselesaikan ──────────────────────────
+      if (dto.status === 'completed' && order.status !== 'completed') {
+        const items = order.items as any[];
+        if (Array.isArray(items) && items.length > 0) {
+          await this.prisma.$transaction(
+            items.map((item: { menuId: string; qty: number }) =>
+              this.prisma.menu.update({
+                where: { id: item.menuId },
+                data: {
+                  stock: { decrement: item.qty },
+                },
+              })
+            )
+          );
+
+          // Set isAvailable=false untuk menu yang stoknya habis
+          const updatedMenus = await this.prisma.menu.findMany({
+            where: {
+              id: { in: items.map((i: { menuId: string }) => i.menuId) },
+              stock: { lte: 0 },
+            },
+          });
+
+          if (updatedMenus.length > 0) {
+            await this.prisma.menu.updateMany({
+              where: { id: { in: updatedMenus.map((m) => m.id) } },
+              data: { isAvailable: false, stock: 0 },
+            });
+          }
+        }
+      }
+
+      return updatedOrder;
     }
 
     // User can only update transferProofUrl and change status from pending_payment to pending_validation
