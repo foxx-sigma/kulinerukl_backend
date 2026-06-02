@@ -72,8 +72,8 @@ export class OrdersService {
         },
       });
 
-      // ── Kurangi stok menu saat order diselesaikan ──────────────────────────
-      if (dto.status === 'completed' && order.status !== 'completed') {
+      // ── Kurangi stok menu saat pesanan dikonfirmasi ──────────────────────────
+      if (dto.status === 'confirmed' && order.status !== 'confirmed') {
         const items = order.items as any[];
         if (Array.isArray(items) && items.length > 0) {
           await this.prisma.$transaction(
@@ -87,20 +87,7 @@ export class OrdersService {
             )
           );
 
-          // Set isAvailable=false untuk menu yang stoknya habis
-          const updatedMenus = await this.prisma.menu.findMany({
-            where: {
-              id: { in: items.map((i: { menuId: string }) => i.menuId) },
-              stock: { lte: 0 },
-            },
-          });
-
-          if (updatedMenus.length > 0) {
-            await this.prisma.menu.updateMany({
-              where: { id: { in: updatedMenus.map((m) => m.id) } },
-              data: { isAvailable: false, stock: 0 },
-            });
-          }
+          // Set isAvailable=false removed per user request so menus don't disappear when stock is 0
         }
       }
 
