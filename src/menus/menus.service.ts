@@ -2,7 +2,6 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateMenuDto } from './dto/create-menu.dto';
-import { UpdateMenuDto } from './dto/update-menu.dto';
 import { PaginationDto, createPaginationMeta } from '../common/dto/pagination.dto';
 
 @Injectable()
@@ -45,7 +44,7 @@ export class MenusService {
     }
   }
 
-  async update(id: string, dto: UpdateMenuDto) {
+  async update(id: string, dto: Partial<CreateMenuDto>) {
     await this.findOne(id);
     try {
       return await this.prisma.menu.update({ where: { id }, data: dto });
