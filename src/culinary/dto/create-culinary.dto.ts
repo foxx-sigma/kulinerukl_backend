@@ -1,5 +1,5 @@
 import { IsString, IsOptional, IsNumber, Min, IsEnum, IsBoolean, IsNotEmpty, MinLength, MaxLength } from 'class-validator'; // IsNumber still used by priceMin/priceMax
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PriceRange } from '@prisma/client';
 
@@ -91,6 +91,11 @@ export class CreateCulinaryDto {
 
   @ApiPropertyOptional({ example: true })
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === 'true' || value === true) return true;
+    if (value === 'false' || value === false) return false;
+    return value;
+  })
   @IsBoolean()
   isActive?: boolean;
 

@@ -1,6 +1,7 @@
 import { IsString, IsNumber, IsOptional, Min, IsBoolean, MinLength, MaxLength, IsPositive } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 
 export class CreateMenuDto {
   @ApiProperty({ example: 'Bakso Campur' })
@@ -38,7 +39,13 @@ export class CreateMenuDto {
 
   @ApiPropertyOptional({ example: true })
   @IsOptional()
+  @Transform(({ value }) => {
+    if (value === 'true' || value === true) return true;
+    if (value === 'false' || value === false) return false;
+    return value;
+  })
   @IsBoolean()
   isAvailable?: boolean;
 }
+
 
