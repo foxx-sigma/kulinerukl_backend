@@ -6,7 +6,10 @@ import { PaginationDto } from '../common/dto/pagination.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 import { GetUser } from '../decorators/get-user.decorator';
 
+import { ApiProperty } from '@nestjs/swagger';
+
 class CreateBookmarkDto {
+  @ApiProperty({ example: 'culinary-place-id-here' })
   @IsString()
   culinaryPlaceId: string;
 }
