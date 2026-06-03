@@ -37,15 +37,6 @@ export class CreateMenuDto {
   @IsString()
   culinaryPlaceId: string;
 
-  @ApiPropertyOptional({ example: true })
-  @IsOptional()
-  @Transform(({ value }) => {
-    if (value === 'true' || value === true) return true;
-    if (value === 'false' || value === false) return false;
-    return value;
-  })
-  @IsBoolean()
-  isAvailable?: boolean;
 }
 
 

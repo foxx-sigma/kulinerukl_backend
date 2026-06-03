@@ -47,8 +47,13 @@ export class MenusService {
       );
     }
 
+    const dataToSave = {
+      ...dto,
+      isAvailable: dto.stock > 0,
+    };
+
     try {
-      return await this.prisma.menu.create({ data: dto });
+      return await this.prisma.menu.create({ data: dataToSave });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
         throw new BadRequestException('ID Tempat Kuliner tidak valid atau tidak ditemukan.');
@@ -77,8 +82,13 @@ export class MenusService {
       }
     }
 
+    const dataToUpdate: any = { ...dto };
+    if (dto.stock !== undefined) {
+      dataToUpdate.isAvailable = dto.stock > 0;
+    }
+
     try {
-      return await this.prisma.menu.update({ where: { id }, data: dto });
+      return await this.prisma.menu.update({ where: { id }, data: dataToUpdate });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
         throw new BadRequestException('ID Tempat Kuliner tidak valid atau tidak ditemukan.');
@@ -89,7 +99,7 @@ export class MenusService {
 
   async remove(id: string) {
     await this.findOne(id);
-    await this.prisma.menu.update({ where: { id }, data: { isAvailable: false } });
-    return { message: 'Menu berhasil dihapus' };
+    await this.prisma.menu.delete({ where: { id } });
+    return { message: 'Menu berhasil dihapus permanen' };
   }
 }

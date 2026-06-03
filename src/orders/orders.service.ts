@@ -92,7 +92,16 @@ export class OrdersService {
             )
           );
 
-          // Set isAvailable=false removed per user request so menus don't disappear when stock is 0
+          // Jika stok mencapai 0 setelah dikurangi, otomatis buat menu menjadi tidak tersedia
+          await this.prisma.menu.updateMany({
+            where: {
+              id: { in: items.map((item: any) => item.menuId) },
+              stock: { lte: 0 },
+            },
+            data: {
+              isAvailable: false,
+            },
+          });
         }
       }
 
